@@ -30,6 +30,21 @@
     
 </head>
 <body>
+
+
+    <div class="modal" id="subjectModal">
+        <h3>Inserisci le Materie</h3>
+        <p>Aggiungi le materie che desideri visualizzare nell'elenco.</p>
+        <div class="form-group">
+            <input type="text" id="newSubject" placeholder="Es. Informatica">
+            <button class="modal-btn" id="addSubjectBtn">Aggiungi</button>
+        </div>
+        <ul id="subjectList"></ul>
+        <div class="modal-buttons">
+            <button class="modal-btn confirm-btn" id="confirmSubjects">Conferma</button>
+        </div>
+    </div>
+    <div class="modal-backdrop" id="modalBackdropSubjects"></div>
     <div class="home" id="home">
         <div id="tasksList"></div>
         <div class="no-tasks" id="noTasks">Nessun compito aggiunto</div>
@@ -262,6 +277,69 @@
     
     // Inizializza l'app caricando i task esistenti
     renderTasks();
+
+
+
+    let subjects = JSON.parse(localStorage.getItem('subjects')) || [];
+
+window.onload = function() {
+    if (subjects.length === 0) {
+        showSubjectModal();
+    } else {
+        populateSubjects();
+    }
+};
+
+// Mostra la modale per aggiungere materie
+function showSubjectModal() {
+    document.getElementById('subjectModal').style.display = 'block';
+    document.getElementById('modalBackdropSubjects').style.display = 'block';
+}
+
+// Aggiungi una materia all'elenco
+document.getElementById('addSubjectBtn').addEventListener('click', () => {
+    const newSubject = document.getElementById('newSubject').value.trim();
+    if (newSubject && !subjects.includes(newSubject)) {
+        subjects.push(newSubject);
+        updateSubjectList();
+        document.getElementById('newSubject').value = '';
+    }
+});
+
+// Aggiorna la lista visiva delle materie
+function updateSubjectList() {
+    const subjectList = document.getElementById('subjectList');
+    subjectList.innerHTML = subjects.map(subject => 
+        `<li>${subject} <button onclick="removeSubject('${subject}')">✖️</button></li>`
+    ).join('');
+}
+
+// Rimuovi materia
+function removeSubject(subject) {
+    subjects = subjects.filter(s => s !== subject);
+    updateSubjectList();
+}
+
+// Conferma e salva le materie
+document.getElementById('confirmSubjects').addEventListener('click', () => {
+    localStorage.setItem('subjects', JSON.stringify(subjects));
+    populateSubjects();
+    closeSubjectModal();
+});
+
+// Popola il select con le materie
+function populateSubjects() {
+    const subjectSelect = document.getElementById('subject');
+    subjectSelect.innerHTML = subjects.map(subject => 
+        `<option value="${subject}">${subject}</option>`
+    ).join('');
+}
+
+// Chiude la modale
+function closeSubjectModal() {
+    document.getElementById('subjectModal').style.display = 'none';
+    document.getElementById('modalBackdropSubjects').style.display = 'none';
+}
        </script>
     
 </body>
