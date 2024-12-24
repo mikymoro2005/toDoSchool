@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="it">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        
+        <!-- Meta tag per iOS -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="School Tasks">
+        
+        <!-- Icone per iOS -->
+        <link rel="apple-touch-icon" href="/api/placeholder/180/180">
+        <link rel="apple-touch-icon" sizes="152x152" href="/api/placeholder/152/152">
+        <link rel="apple-touch-icon" sizes="167x167" href="/api/placeholder/167/167">
+        <link rel="apple-touch-icon" sizes="180x180" href="/api/placeholder/180/180">
+        
+        <!-- Splash screen per iPhone e iPad -->
+        <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="/api/placeholder/1290/2796">
+        <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="/api/placeholder/1179/2556">
+        <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" href="/api/placeholder/1284/2778">
+        <link rel="stylesheet" href="Page3.css">
+        <link rel="stylesheet" href="Page3.js">
+        <title>School Tasks</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Tasks</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    
+</head>
+<body>
+    <div class="home" id="home">
+        <div id="tasksList"></div>
+        <div class="no-tasks" id="noTasks">Nessun compito aggiunto</div>
+        <button class="add-btn" id="addBtn">+</button>
+    </div>
+
+    <div class="add-task" id="addTask">
+        <button class="back-btn" id="backBtn">← Indietro</button>
+        <div class="form-group">
+            <label>Materia</label>
+            <select id="subject">
+                <option value="Economia">Economia Aziendale</option>
+                <option value="Diritto">Diritto</option>
+                <option value="Economia_Politica">Economia Politica</option>
+                <option value="Matematica">Matematica</option>
+                <option value="Italiano">Italiano</option>
+                <option value="Storia">Storia</option>
+                <option value="Inglese">Inglese</option>
+                <option value="Francese">Francese</option>
+                <option value="Tedesco">Tedesco</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Descrizione</label>
+            <textarea id="description" rows="4" placeholder="Descrivi il compito..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Data di scadenza</label>
+            <input type="datetime-local" id="dueDate">
+        </div>
+        <button class="save-btn" id="saveBtn">Salva</button>
+    </div>
+
+    <div class="modal" id="deleteModal">
+        <h3>Eliminare il compito?</h3>
+        <p>Questa azione non può essere annullata.</p>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel-btn" id="cancelDelete">Annulla</button>
+            <button class="modal-btn confirm-btn" id="confirmDelete">Elimina</button>
+        </div>
+    </div>
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+
+
+    <script>const subjectColors = {
+        'Economia': '#FF4081',        // Rosa acceso
+        'Diritto': '#7C4DFF',        // Viola
+        'Economia_Politica': '#00BCD4', // Azzurro
+        'Matematica': '#FFC107',     // Giallo
+        'Italiano': '#4CAF50',       // Verde
+        'Inglese': '#FF5722',        // Arancione
+        'Storia': '#9C27B0',         // Viola scuro
+        'Francese': '#3F51B5',       // Blu
+        'Tedesco': '#009688'         // Verde acqua
+            };  
+    
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            let currentTaskId = null;
+    
+            function showAddTask() {
+                document.getElementById('addTask').classList.add('show-add');
+            }
+    
+            function hideAddTask() {
+                document.getElementById('addTask').classList.remove('show-add');
+                clearForm();
+            }
+    
+            function clearForm() {
+                document.getElementById('subject').value = 'Informatica';
+                document.getElementById('description').value = '';
+                document.getElementById('dueDate').value = '';
+                currentTaskId = null;
+            }
+    
+            function saveTask() {
+                const subject = document.getElementById('subject').value;
+                const description = document.getElementById('description').value;
+                const dueDate = document.getElementById('dueDate').value;
+    
+                if (!subject || !description || !dueDate) {
+                    alert('Per favore, compila tutti i campi');
+                    return;
+                }
+    
+                const task = {
+                    id: currentTaskId || Date.now(),
+                    subject,
+                    description,
+                    dueDate,
+                    color: subjectColors[subject]
+                };
+    
+                if (currentTaskId) {
+                    const index = tasks.findIndex(t => t.id === currentTaskId);
+                    if (index !== -1) {
+                        tasks[index] = task;
+                    }
+                } else {
+                    tasks.push(task);
+                }
+    
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                renderTasks();
+                hideAddTask();
+            }
+    
+            function renderTasks() {
+                const tasksList = document.getElementById('tasksList');
+                const noTasks = document.getElementById('noTasks');
+                
+                // Ordina i task per data di scadenza
+                tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+                
+                if (tasks.length === 0) {
+                    tasksList.innerHTML = '';
+                    noTasks.style.display = 'block';
+                    return;
+                }
+    
+                noTasks.style.display = 'none';
+                tasksList.innerHTML = tasks.map(task => `
+                    <div class="task-card" data-id="${task.id}">
+                        <div class="task-header">
+                            <span class="subject-tag" style="background: ${task.color}20; color: ${task.color}">
+                                ${task.subject}
+                            </span>
+                            <span class="task-date">
+                                ${new Date(task.dueDate).toLocaleString('it-IT', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </span>
+                        </div>
+                        <div class="task-description">${task.description}</div>
+                        <div class="delete-overlay">Modifica</div>
+                        <div class="edit-overlay">Elimina</div>
+                    </div>
+                `).join('');
+    
+                // Aggiungi gesture handling per ogni card
+                document.querySelectorAll('.task-card').forEach(card => {
+                    const hammer = new Hammer(card);
+                    let isDragging = false;
+                    let startX = 0;
+    
+                    hammer.on('panstart', () => {
+                        isDragging = true;
+                        startX = card.style.transform ? 
+                            parseInt(card.style.transform.replace('translateX(', '')) :
+                            0;
+                    });
+    
+                    hammer.on('panleft panright', (e) => {
+                        if (!isDragging) return;
+                        const newX = startX + e.deltaX;
+                        
+                        if (newX < -80) {
+                            card.style.transform = 'translateX(-80px)';
+                            card.querySelector('.edit-overlay').style.transform = 'translateX(0)';
+                        } else if (newX > 80) {
+                            card.style.transform = 'translateX(80px)';
+                            card.querySelector('.delete-overlay').style.transform = 'translateX(0)';
+                        } else {
+                            card.style.transform = `translateX(${newX}px)`;
+                            card.querySelector('.edit-overlay').style.transform = 'translateX(-100%)';
+                            card.querySelector('.delete-overlay').style.transform = 'translateX(100%)';
+                        }
+                    });
+    
+                    hammer.on('panend', (e) => {
+                        isDragging = false;
+                        const threshold = 40;
+    
+                        if (e.deltaX < -threshold) {
+                            // Edit
+                            editTask(card.dataset.id);
+                        } else if (e.deltaX > threshold) {
+                            // Delete
+                            showDeleteModal(card.dataset.id);
+                        }
+    
+                        // Reset position
+                        card.style.transform = 'translateX(0)';
+                        card.querySelector('.edit-overlay').style.transform = 'translateX(-100%)';
+                        card.querySelector('.delete-overlay').style.transform = 'translateX(100%)';
+                    });
+                });
+            }
+    
+            function editTask(taskId) {
+                const task = tasks.find(t => t.id === parseInt(taskId));
+                if (!task) return;
+    
+                currentTaskId = task.id;
+                document.getElementById('subject').value = task.subject;
+                document.getElementById('description').value = task.description;
+                document.getElementById('dueDate').value = task.dueDate;
+                showAddTask();
+            }
+    
+            function showDeleteModal(taskId) {
+                currentTaskId = parseInt(taskId);
+                document.getElementById('deleteModal').style.display = 'block';
+                document.getElementById('modalBackdrop').style.display = 'block';
+            }
+    
+            function hideDeleteModal() {
+                document.getElementById('deleteModal').style.display = 'none';
+                document.getElementById('modalBackdrop').style.display = 'none';
+                currentTaskId = null;
+            }
+    
+            function deleteTask() {
+                tasks = tasks.filter(t => t.id !== currentTaskId);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                renderTasks();
+                hideDeleteModal();
+            }
+    
+            // Event Listeners
+            document.getElementById('addBtn').addEventListener('click', showAddTask);
+            document.getElementById('backBtn').addEventListener('click', hideAddTask);
+            document.getElementById('saveBtn').addEventListener('click', saveTask);
+            document.getElementById('confirmDelete').addEventListener('click', deleteTask);
+    document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
+    document.getElementById('modalBackdrop').addEventListener('click', hideDeleteModal);
+    
+    // Inizializza l'app caricando i task esistenti
+    renderTasks();
+       </script>
+    
+</body>
+</html>
