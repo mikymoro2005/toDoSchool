@@ -251,13 +251,10 @@
             function showDeleteModal(taskId) {
                 currentTaskId = parseInt(taskId);
                 document.getElementById('deleteModal').style.display = 'block';
-                document.getElementById('modalBackdrop').style.display = 'block';
             }
-    
+            
             function hideDeleteModal() {
                 document.getElementById('deleteModal').style.display = 'none';
-                document.getElementById('modalBackdrop').style.display = 'none';
-                currentTaskId = null;
             }
     
             function deleteTask() {
